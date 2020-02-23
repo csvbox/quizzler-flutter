@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:rflutter_alert/rflutter_alert.dart';
+
+import 'package:quizzler/questionBank.dart';
 
 void main() => runApp(Quizzler());
 
@@ -25,6 +28,79 @@ class QuizPage extends StatefulWidget {
 }
 
 class _QuizPageState extends State<QuizPage> {
+  List<Icon> scores = [];
+  int currentQuestion = 0;
+  int correctAnswers = 0;
+
+  void checkAnswer(bool selectedAnswer) {
+    if (QuestionBank.getAnswer(currentQuestion) == selectedAnswer) {
+      scores.add(Icon(
+        Icons.check,
+        color: Colors.green,
+      ));
+      ++correctAnswers;
+    } else {
+      scores.add(Icon(
+        Icons.close,
+        color: Colors.red,
+      ));
+    }
+    checkQuizProgress();
+  }
+
+  void checkQuizProgress() {
+    if (currentQuestion < QuestionBank.getQuestionsLength() - 1) {
+      ++currentQuestion;
+    } else {
+      showEndDialog();
+    }
+  }
+
+  showEndDialog() {
+    Alert(
+      context: context,
+      style: AlertStyle(
+        animationType: AnimationType.fromTop,
+        isCloseButton: false,
+        isOverlayTapDismiss: false,
+        descStyle: TextStyle(fontWeight: FontWeight.bold),
+        animationDuration: Duration(milliseconds: 400),
+        alertBorder: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(0.0),
+          side: BorderSide(
+            color: Colors.grey,
+          ),
+        ),
+        titleStyle: TextStyle(
+          color: Colors.red,
+        ),
+      ),
+      type: AlertType.info,
+      title: "Cool!",
+      desc:
+          "You have finished the quiz.\nYour score is ${correctAnswers}/${scores.length}",
+      buttons: [
+        DialogButton(
+          child: Text(
+            "Start over",
+            style: TextStyle(color: Colors.white, fontSize: 20),
+          ),
+          onPressed: () {
+            Navigator.pop(context);
+            reset();
+          },
+          color: Color.fromRGBO(0, 179, 134, 1.0),
+          radius: BorderRadius.circular(0.0),
+        ),
+      ],
+    ).show();
+  }
+
+  void reset() {
+    currentQuestion = 0;
+    scores.clear();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Column(
@@ -37,7 +113,7 @@ class _QuizPageState extends State<QuizPage> {
             padding: EdgeInsets.all(10.0),
             child: Center(
               child: Text(
-                'This is where the question text will go.',
+                QuestionBank.getQuestion(currentQuestion),
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   fontSize: 25.0,
@@ -62,6 +138,9 @@ class _QuizPageState extends State<QuizPage> {
               ),
               onPressed: () {
                 //The user picked true.
+                setState(() {
+                  checkAnswer(true);
+                });
               },
             ),
           ),
@@ -80,11 +159,16 @@ class _QuizPageState extends State<QuizPage> {
               ),
               onPressed: () {
                 //The user picked false.
+                setState(() {
+                  checkAnswer(false);
+                });
               },
             ),
           ),
         ),
-        //TODO: Add a Row here as your score keeper
+        Row(
+          children: scores,
+        )
       ],
     );
   }
